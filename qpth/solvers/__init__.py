@@ -1,3 +1,3 @@
-__all__ = ['cvxpy', 'pdipm']
+__all__ = ['cvxpy', 'pdipm', 'dynamic']
 
-from . import cvxpy
+from . import cvxpy, dynamic

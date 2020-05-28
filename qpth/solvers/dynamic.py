@@ -23,8 +23,8 @@ def forward(Q, p, G, h, A, b, verbose=0, maxIter=100, dt=0.2):
     la_d = GQ_I.bmm(p.unsqueeze(2)) - h.unsqueeze(2)       # - G Q^{-1} p - h
     nu_d = AQ_I.bmm(p.unsqueeze(2)) - b.unsqueeze(2)       # - A Q^{-1} p - b
 
-    lams = torch.zeros(nBatch, nineq, 1).type_as(Q).to(Q.device)
-    nus = torch.zeros(nBatch, neq, 1).type_as(Q).to(Q.device)
+    lams = torch.rand(nBatch, nineq, 1).type_as(Q).to(Q.device)
+    nus = torch.rand(nBatch, neq, 1).type_as(Q).to(Q.device)
     zeros = torch.zeros(nBatch, nineq, 1).type_as(Q).to(Q.device)
 
     for _ in range(maxIter):

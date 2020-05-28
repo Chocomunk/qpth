@@ -6,7 +6,6 @@ from . import solvers
 from .solvers.pdipm import batch as pdipm_b
 from .solvers.pdipm import spbatch as pdipm_spb
 # from .solvers.pdipm import single as pdipm_s
-from .solvers.dynamic import solve as dynamic_solve
 
 from enum import Enum
 
@@ -15,15 +14,15 @@ class QPSolvers(Enum):
     PDIPM_BATCHED = 1
     CVXPY = 2
     DYNAMIC = 3
+    DYNAMIC_INEQ = 4
 
 
 def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3, dt=0.2,
                  maxIter=20, solver=QPSolvers.PDIPM_BATCHED,
                  check_Q_spd=True):
-    print("RIGHT ONE")
     class QPFunctionFn(Function):
         @staticmethod
-        def forward(ctx, Q_, p_, G_, h_, A_, b_):
+        def forward(ctx, Q_, p_, G_, h_, A_=torch.Tensor(), b_=torch.Tensor()):
             """Solve a batch of QPs.
 
             This function solves a batch of QPs, each optimizing over
@@ -122,12 +121,21 @@ def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3, dt=0.2,
                 ctx.nus = nus
                 ctx.slacks = slacks
             elif solver == QPSolvers.DYNAMIC:
-                zhats, ctx.lams, ctx.slacks = dynamic_solve.forward(Q, p, G, h, 
+                zhats, ctx.lams, ctx.nus, ctx.slacks = solvers.dynamic.forward(
+                    Q, p, G, h, A, b,
+                    maxIter=maxIter, dt=dt)
+            elif solver == QPSolvers.DYNAMIC_INEQ:
+                zhats, ctx.lams, ctx.slacks = solvers.dynamic.forward_ineq(
+                    Q, p, G, h,
                     maxIter=maxIter, dt=dt)
                 ctx.nus = torch.zeros(nBatch, neq).type_as(Q)
             else:
                 assert False
 
+            print(zhats)
+            print(ctx.lams)
+            print(ctx.nus)
+            print(ctx.slacks)
             ctx.save_for_backward(zhats, Q_, p_, G_, h_, A_, b_)
             return zhats
 
