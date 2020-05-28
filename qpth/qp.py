@@ -6,6 +6,7 @@ from . import solvers
 from .solvers.pdipm import batch as pdipm_b
 from .solvers.pdipm import spbatch as pdipm_spb
 # from .solvers.pdipm import single as pdipm_s
+from .solvers.dynamic import solve as dynamic_solve
 
 from enum import Enum
 
@@ -13,11 +14,13 @@ from enum import Enum
 class QPSolvers(Enum):
     PDIPM_BATCHED = 1
     CVXPY = 2
+    DYNAMIC = 3
 
 
-def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3,
+def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3, dt=0.2,
                  maxIter=20, solver=QPSolvers.PDIPM_BATCHED,
                  check_Q_spd=True):
+    print("RIGHT ONE")
     class QPFunctionFn(Function):
         @staticmethod
         def forward(ctx, Q_, p_, G_, h_, A_, b_):
@@ -118,6 +121,10 @@ def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3,
                 ctx.lams = lams
                 ctx.nus = nus
                 ctx.slacks = slacks
+            elif solver == QPSolvers.DYNAMIC:
+                zhats, ctx.lams, ctx.slacks = dynamic_solve.forward(Q, p, G, h, 
+                    maxIter=maxIter, dt=dt)
+                ctx.nus = torch.zeros(nBatch, neq).type_as(Q)
             else:
                 assert False
 
@@ -139,7 +146,7 @@ def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3,
             neq, nineq = ctx.neq, ctx.nineq
 
 
-            if solver == QPSolvers.CVXPY:
+            if solver != QPSolvers.PDIPM_BATCHED:
                 ctx.Q_LU, ctx.S_LU, ctx.R = pdipm_b.pre_factor_kkt(Q, G, A)
 
             # Clamp here to avoid issues coming up when the slacks are too small.
