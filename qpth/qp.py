@@ -132,10 +132,10 @@ def QPFunction(eps=1e-12, verbose=0, notImprovedLim=3, dt=0.2,
             else:
                 assert False
 
-            print(zhats)
-            print(ctx.lams)
-            print(ctx.nus)
-            print(ctx.slacks)
+            # print(zhats)
+            # print(ctx.lams)
+            # print(ctx.nus)
+            # print(ctx.slacks)
             ctx.save_for_backward(zhats, Q_, p_, G_, h_, A_, b_)
             return zhats
 
